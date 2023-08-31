@@ -90,7 +90,7 @@ class Window:
         Function for the OK button in the Person window. Gets the output and closes the window
         """
         #Load data
-        self.df = pd.read_csv('D:\My stuff\Coding\CSTS\MČR\MČR results.csv', index_col = 'Osoba', dtype = str)
+        self.df = pd.read_csv('D:\My stuff\Coding\MČR\MČR results.csv', index_col = 'Osoba', dtype = str)
 
         #Get the output
         person = self.person_textbox.get()
@@ -243,8 +243,8 @@ class Window:
         Function getting competition information from the user
         """
         #Load data
-        self.df_links = pd.read_excel('D:\My stuff\Coding\CSTS\MČR\MČR links.xlsx')
-        with open('D:\My stuff\Coding\CSTS\MČR\mcr_results.pkl', 'rb') as handle:
+        self.df_links = pd.read_excel('D:\My stuff\Coding\MČR\MČR links.xlsx')
+        with open('D:\My stuff\Coding\MČR\mcr_results.pkl', 'rb') as handle:
             self.mcr_results = pickle.load(handle)
 
         #Create a window
@@ -364,7 +364,7 @@ class Window:
         """
         Function setting a style of the given root
         """
-        wind.tk.call('lappend', 'auto_path', 'D:/My stuff/Coding/CSTS/MČR/awthemes-10.4.0')
+        wind.tk.call('lappend', 'auto_path', 'D:/My stuff/Coding/MČR/awthemes-10.4.0')
         wind.tk.call('package', 'require', style)
         wind_style = ttk.Style(wind)
         wind_style.theme_use(style)
