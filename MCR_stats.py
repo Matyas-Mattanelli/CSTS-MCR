@@ -1,5 +1,5 @@
-import tkinter as tk
-from tkinter import ttk
+import customtkinter as ctk
+from CTkTable import CTkTable
 import pandas as pd
 import re
 import pickle
@@ -9,35 +9,36 @@ class Window:
 
     def __init__(self):
         #Initiate window
-        self.root = tk.Tk()
-        self.set_style(self.root, 'awdark')
-        self.root.title('MČR database')
+        self.root = ctk.CTk()
+        self.root.title('ČSTS MČR database')
         self.center_window(500, 250, self.root)
 
         #Create a label
-        label = ttk.Label(self.root, text = 'Are you looking for a person or for a competition?', justify = 'center', wraplength = 400)
-        label.configure(font = (None, 20))
-        label.pack(pady = 30)
+        label = ctk.CTkLabel(self.root, text = 'Are you looking for a person or for a competition?', justify = 'center', wraplength = 400)
+        label.grid(row = 0, column = 0, padx = 20, pady = 20)
 
         #Create a grid for the buttons
-        buttframe = ttk.Frame(self.root)
+        buttframe = ctk.CTkFrame(self.root, fg_color = self.root.cget('fg_color'))
         buttframe.columnconfigure(0, weight = 1)
         buttframe.columnconfigure(1, weight = 1)
 
         #Button for person search
-        butt1 = ttk.Button(buttframe, text = 'Person', command = self.person_window)
-        butt1.grid(row = 0, column = 0)
+        butt1 = ctk.CTkButton(buttframe, text = 'Person', command = self.person_window)
+        butt1.grid(row = 0, column = 0, padx = 20, pady = 20)
 
         #Button for competition search
-        butt2 = ttk.Button(buttframe, text = 'Competition', command = self.comp_window)
-        butt2.grid(row = 0, column = 1)
+        butt2 = ctk.CTkButton(buttframe, text = 'Competition', command = self.comp_window)
+        butt2.grid(row = 0, column = 1, padx = 20, pady = 20)
 
         #Put frame into the window
-        buttframe.pack(expand = True, fill = 'x')
+        buttframe.grid(row = 1, column = 0, padx = 20, pady = 20)
 
         #Add a button for canceling the window
-        butt_cancel = ttk.Button(self.root, text = 'Cancel', command = self.root.destroy)
-        butt_cancel.pack(pady = 10)
+        butt_cancel = ctk.CTkButton(self.root, text = 'Cancel', command = self.root.destroy)
+        butt_cancel.grid(row = 2, column = 0, padx = 20)
+
+        #Center everything
+        self.root.grid_columnconfigure(0, weight = 1)
 
         self.root.mainloop()
 
@@ -46,44 +47,39 @@ class Window:
         Function getting a name of the person from the user
         """
         #Create a window
-        self.person_root = tk.Tk()
-        self.set_style(self.person_root, 'awdark')
+        self.person_root = ctk.CTkToplevel(self.root)
         self.center_window(500, 250, self.person_root)
-        self.person_root.title('Searching for a person')
+        self.person_root.title('ČSTS MČR database')
 
         #Add a label
-        label = ttk.Label(self.person_root, text = 'Please specify the name of the dancer', justify = 'center', wraplength = 400)
-        label.configure(font = (None, 20))
-        label.pack(pady = 30)
+        label = ctk.CTkLabel(self.person_root, text = 'Please specify the name of the dancer', justify = 'center', wraplength = 400)
+        label.grid(row = 0, column = 0, padx = 20, pady = 20)
 
         #Add a textbox
-        self.person_textbox = ttk.Entry(self.person_root, justify = 'center')
-        self.person_textbox.pack()
+        self.person_textbox = ctk.CTkEntry(self.person_root, justify = 'center', width = 300)
+        self.person_textbox.grid(row = 1, column = 0, padx = 20, pady = 20)
 
         #Create a grid for the buttons
-        buttframe = ttk.Frame(self.person_root)
+        buttframe = ctk.CTkFrame(self.person_root, fg_color = self.root.cget('fg_color'))
         buttframe.columnconfigure(0, weight = 1)
         buttframe.columnconfigure(1, weight = 1)
 
         #Add a button to confirm the input
-        butt_person = ttk.Button(buttframe, text = 'OK', command = self.get_person)
-        butt_person.grid(row = 0, column = 0)
+        butt_person = ctk.CTkButton(buttframe, text = 'OK', command = self.get_person)
+        butt_person.grid(row = 0, column = 0, padx = 20, pady = 20)
 
         #Add a button for returning to the main page
-        butt_main_page = ttk.Button(buttframe, text = 'Back', command = self.main_page_person_window)
-        butt_main_page.grid(row = 0, column = 1)
+        butt_main_page = ctk.CTkButton(buttframe, text = 'Back', command = self.person_root.destroy)
+        butt_main_page.grid(row = 0, column = 1, padx = 20, pady = 20)
 
         #Put frame into the window
-        buttframe.pack(expand = True, fill = 'x')
+        buttframe.grid(row = 2, column = 0, padx = 20, pady = 20)
 
-        self.person_root.mainloop()
+        #Center everything
+        self.person_root.grid_columnconfigure(0, weight = 1)
 
-    def main_page_person_window(self):
-        """
-        Function serving as a command for button returning to the main page from the person window
-        """
-        self.person_root.destroy()
-        self.root.lift()
+        #Put in focus
+        self.person_root.grab_set()
 
     def get_person(self):
         """
@@ -98,97 +94,95 @@ class Window:
         #Close the window
         self.person_root.destroy()
 
-        #Create a window for the final output
-        self.person_output_root = tk.Tk()
-        self.set_style(self.person_output_root, 'awdark')
-        self.center_window(500, 500, self.person_output_root)
-        self.person_output_root.title(f'Results for {person}')
-
         #Get the results
         index_check = self.search_index(person)
+
+        #Create a window for the final output
+        self.person_output_root = ctk.CTkToplevel(self.root)
+        self.center_window(500, 200 if index_check == 'Not found' else 500, self.person_output_root)
+        self.person_output_root.title('ČSTS MČR database')
+
+        
         if index_check == 'Not found':
             if person == '':
                 label_text = 'Please specify a valid name'
             else:
                 label_text = f'No results were found for {person}'
-            res = ttk.Label(self.person_output_root, text = label_text, justify = 'center', wraplength = 400)
-            res.pack(expand = True)
+            res = ctk.CTkLabel(self.person_output_root, text = label_text, justify = 'center', wraplength = 400)
+            res.grid(row = 0, column = 0, padx = 20, pady = 20)
 
             #Create a grid for the buttons
-            buttframe = ttk.Frame(self.person_output_root)
+            buttframe = ctk.CTkFrame(self.person_output_root, fg_color = self.root.cget('fg_color'))
             buttframe.columnconfigure(0, weight = 1)
             buttframe.columnconfigure(1, weight = 1)
             buttframe.columnconfigure(2, weight = 1)
 
             #Button for continuing the search
-            butt_next = ttk.Button(buttframe, text = 'Try again', command = self.person_butt_next)
-            butt_next.grid(row = 0, column = 0)
+            butt_next = ctk.CTkButton(buttframe, text = 'Try again', command = self.person_butt_next)
+            butt_next.grid(row = 0, column = 0, padx = 20, pady = 20)
 
             #Button for returning to the main page
-            butt_main_page = ttk.Button(buttframe, text = 'Main page', command = self.main_page_person_output)
-            butt_main_page.grid(row = 0, column = 1)
+            butt_main_page = ctk.CTkButton(buttframe, text = 'Main page', command = self.person_output_root.destroy)
+            butt_main_page.grid(row = 0, column = 1, padx = 20, pady = 20)
 
             #Button for canceling
-            butt_canc = ttk.Button(buttframe, text = 'Cancel', command = self.cancel_person)
-            butt_canc.grid(row = 0, column = 2)
+            butt_canc = ctk.CTkButton(buttframe, text = 'Cancel', command = self.cancel_person)
+            butt_canc.grid(row = 0, column = 2, padx = 20, pady = 20)
 
             #Put frame into the window
-            buttframe.pack(expand = True, fill = 'x')
+            buttframe.grid(row = 1, column = 0, padx = 20, pady = 20)
         else:
             #Get the results
-            res_df = self.df.loc[index_check, :].dropna()
+            res_df = self.df.loc[index_check, :].dropna().reset_index() #Find the person, keep only relevant competitions and make the index a column
+            res_df['index'] = res_df['index'].str.replace('Do 21let', 'Do\xa021let') #Replace a space with a special character so a split can be done
+            res_df[['Year', 'Age group', 'Category']] = res_df['index'].str.split(' ', expand = True) #Split the index into columns
+            res_df.drop('index', axis = 1, inplace = True) #Drop the obsolete index
+            res_df.rename(columns = {index_check : 'Rank'}, inplace = True) #Rename the column with the rank
+            res_df = res_df.loc[:, ['Year', 'Age group', 'Category', 'Rank']] #Rearrange the columns
+            res_df = np.vstack([res_df.columns, res_df.values]).tolist() #Add columns as a first row and convert to numpy array
 
-            #Create a Frame
-            table_frame = ttk.Frame(self.person_output_root)
-            table_frame.pack(pady = 20)
+            #Add label
+            label = ctk.CTkLabel(self.person_output_root, text = f'Results for {person}', justify = 'center', wraplength = 400)
+            label.grid(row = 0, column = 0, padx = 20, pady = 20)
 
-            #Add a scrollbar
-            table_scroll = ttk.Scrollbar(table_frame)
-            table_scroll.pack(side = tk.RIGHT, fill = tk.Y)
+            #Create a scrollable frame
+            frame = ctk.CTkScrollableFrame(self.person_output_root, width = 400, height = 300, fg_color = self.root.cget('fg_color'))
+            frame.columnconfigure(0, weight = 1)
 
-            #Initiate the resulting table
-            table = ttk.Treeview(table_frame, yscrollcommand = table_scroll.set)
-            table.pack()
-            table_scroll.config(command = table.yview)
+            #Create the table
+            table = CTkTable(frame, row = len(res_df), column = len(res_df[0]), values = res_df, header_color = ['#3B8ED0', '#1F6AA5'])
+            table.pack(expand=True, fill="both")
 
-            #Define the columns
-            cols = ['Year', 'Age group', 'Category', 'Rank']
-            table['columns'] = cols
-            table.column("#0", width = 0,  stretch = tk.NO) #The 0th column
-            for i in cols:
-                table.column(i, anchor = tk.CENTER, width=80)
-            for i in cols:
-                table.heading(i, text = i, anchor = tk.CENTER)
-
-            #Add data
-            for i in res_df.index:
-                table.insert(parent = '', index = 'end', text='', values = re.sub('Do 21let', 'Do\xa021let', i).split(' ') + [res_df[i]])
-
-            #Pack the table
-            table.pack()
+            #Add the frame
+            frame.grid(row = 1, column = 0)
 
             #Create a grid for the buttons
-            buttframe = ttk.Frame(self.person_output_root)
+            buttframe = ctk.CTkFrame(self.person_output_root, fg_color = self.root.cget('fg_color'))
             buttframe.columnconfigure(0, weight = 1)
             buttframe.columnconfigure(1, weight = 1)
             buttframe.columnconfigure(2, weight = 1)
 
             #Button for continuing the search
-            butt_next = ttk.Button(buttframe, text = 'Find next', command = self.person_butt_next)
-            butt_next.grid(row = 0, column = 0)
+            butt_next = ctk.CTkButton(buttframe, text = 'Find next', command = self.person_butt_next)
+            butt_next.grid(row = 0, column = 0, padx = 20, pady = 20)
 
             #Button for returning to the main page
-            butt_main_page = ttk.Button(buttframe, text = 'Main page', command = self.main_page_person_output)
-            butt_main_page.grid(row = 0, column = 1)
+            butt_main_page = ctk.CTkButton(buttframe, text = 'Main page', command = self.main_page_person_output)
+            butt_main_page.grid(row = 0, column = 1, padx = 20, pady = 20)
 
             #Button for canceling
-            butt_canc = ttk.Button(buttframe, text = 'Cancel', command = self.cancel_person)
-            butt_canc.grid(row = 0, column = 2)
+            butt_canc = ctk.CTkButton(buttframe, text = 'Cancel', command = self.cancel_person)
+            butt_canc.grid(row = 0, column = 2, padx = 20, pady = 20)
 
             #Put frame into the window
-            buttframe.pack(expand = True, fill = 'x')
+            buttframe.grid(row = 2, column = 0, padx = 20, pady = 20)
 
-        self.person_output_root.mainloop()
+        #Center everything
+        self.person_output_root.grid_columnconfigure(0, weight = 1)
+
+        #Put in focus
+        self.person_output_root.grab_set()
+
     
     def person_butt_next(self):
         """
@@ -248,50 +242,49 @@ class Window:
             self.mcr_results = pickle.load(handle)
 
         #Create a window
-        self.comp_root = tk.Tk()
-        self.set_style(self.comp_root, 'awdark')
+        self.comp_root = ctk.CTkToplevel(self.root)
         self.center_window(500, 300, self.comp_root)
-        self.comp_root.title('Searching for a competition')
+        self.comp_root.title('ČSTS MČR Database')
 
         #Add a label
-        label = ttk.Label(self.comp_root, text = 'Please specify the data for the desired competition', justify = 'center', wraplength = 400)
-        label.pack(pady = 30)
+        label = ctk.CTkLabel(self.comp_root, text = 'Please specify the data for the desired competition', justify = 'center', wraplength = 400)
+        label.grid(row = 0, column = 0, padx = 20, pady = 20)
 
         #Add a menu for year
-        self.year_val = tk.StringVar(self.comp_root) #Default value
-        self.year_menu = ttk.OptionMenu(self.comp_root, self.year_val, 'Select Year', *self.df_links['Year'].unique())
-        self.year_menu.pack()
+        self.year_menu = ctk.CTkOptionMenu(self.comp_root, values = self.df_links['Year'].unique())
+        self.year_menu.grid(row = 1, column = 0, padx = 20, pady = 20)
 
         #Add a menu for age group
-        self.age_group_val = tk.StringVar(self.comp_root) #Default value
-        self.age_group_menu = ttk.OptionMenu(self.comp_root, self.age_group_val, 'Select age group', *self.df_links['Age group'].unique())
-        self.age_group_menu.pack()
+        self.age_group_menu = ctk.CTkOptionMenu(self.comp_root, values = self.df_links['Age group'].unique())
+        self.age_group_menu.grid(row = 2, column = 0, padx = 20, pady = 20)
 
         #Add a menu for category
-        self.category_val = tk.StringVar(self.comp_root) #Default value
-        self.category_menu = ttk.OptionMenu(self.comp_root, self.category_val, 'Select category', *self.df_links['Category'].unique())
-        self.category_menu.pack()
+        self.category_menu = ctk.CTkOptionMenu(self.comp_root, values = self.df_links['Category'].unique())
+        self.category_menu.grid(row = 3, column = 0, padx = 20, pady = 20)
 
         #Add an OK button
-        butt_comp = ttk.Button(self.comp_root, text = 'OK', command = self.get_comp)
-        butt_comp.pack(pady = 10)
+        butt_comp = ctk.CTkButton(self.comp_root, text = 'OK', command = self.get_comp)
+        butt_comp.grid(row = 2, column = 0, padx = 20, pady = 20)
 
-        self.comp_root.mainloop()
+        #Center everything
+        self.comp_root.grid_columnconfigure(0, weight = 1)
+
+        #Put in focus
+        self.comp_root.grab_set()
 
     def get_comp(self):
         """
         Function for the OK button in the Competition window. Get the output and close the window
         """
         #Create a window for the final output
-        self.comp_output_root = tk.Tk()
-        self.set_style(self.comp_output_root, 'awdark')
+        self.comp_output_root = ctk.CTkToplevel(self.root)
         self.center_window(600, 500, self.comp_output_root)
-        self.comp_output_root.title(f'Search results')
+        self.comp_output_root.title('ČSTS MČR Database')
 
         #Find the desired competition
         try:
             #Get the index of the competition
-            ind = np.where((self.df_links['Year'] == int(self.year_val.get())) & (self.df_links['Age group'] == self.age_group_val.get()) & (self.df_links['Category'] == self.category_val.get()))[0][0]
+            ind = np.where((self.df_links['Year'] == int(self.year_menu.get())) & (self.df_links['Age group'] == self.age_group_menu.get()) & (self.df_links['Category'] == self.category_menu.get()))[0][0]
             
             #Close the competition window
             self.comp_root.destroy()
