@@ -12,6 +12,7 @@ class Window:
         self.root = ctk.CTk()
         self.root.title('ČSTS MČR database')
         self.center_window(500, 250, self.root)
+        self.root.wm_iconbitmap('cstslogo.ico')
 
         #Create a label
         label = ctk.CTkLabel(self.root, text = 'Are you looking for a person or for a competition?', justify = 'center', wraplength = 400)
@@ -50,6 +51,7 @@ class Window:
         self.person_root = ctk.CTkToplevel(self.root)
         self.center_window(500, 250, self.person_root)
         self.person_root.title('ČSTS MČR database')
+        self.person_root.after(250, lambda: self.person_root.iconbitmap('cstslogo.ico'))
 
         #Add a label
         label = ctk.CTkLabel(self.person_root, text = 'Please specify the name of the dancer', justify = 'center', wraplength = 400)
@@ -104,6 +106,7 @@ class Window:
         self.person_output_root = ctk.CTkToplevel(self.root)
         self.center_window(500 if index_check == 'Not found' else 700, 200 if index_check == 'Not found' else 500, self.person_output_root)
         self.person_output_root.title('ČSTS MČR database')
+        self.person_output_root.after(250, lambda: self.person_output_root.iconbitmap('cstslogo.ico'))
 
         
         if index_check == 'Not found':
@@ -258,6 +261,7 @@ class Window:
         self.comp_root = ctk.CTkToplevel(self.root)
         self.center_window(500, 300, self.comp_root)
         self.comp_root.title('ČSTS MČR Database')
+        self.comp_root.after(250, lambda: self.comp_root.iconbitmap('cstslogo.ico'))
 
         #Add a label
         label = ctk.CTkLabel(self.comp_root, text = 'Please specify the data for the desired competition', justify = 'center', wraplength = 400)
@@ -332,6 +336,7 @@ class Window:
         self.comp_output_root = ctk.CTkToplevel(self.root)
         self.center_window(700 if ind is not None else 500, 500 if ind is not None else 200, self.comp_output_root)
         self.comp_output_root.title('ČSTS MČR Database')
+        self.comp_output_root.after(250, lambda: self.comp_output_root.iconbitmap('cstslogo.ico'))
 
         if ind is not None:
             #Get the results
