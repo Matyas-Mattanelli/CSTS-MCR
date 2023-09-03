@@ -86,7 +86,10 @@ class Window:
         Function for the OK button in the Person window. Gets the output and closes the window
         """
         #Load data
-        self.df = pd.read_csv('D:\My stuff\Coding\MČR\MČR results.csv', index_col = 'Osoba', dtype = str)
+        self.df = pd.read_csv('D:\My stuff\Coding\MČR\MČR results.csv', index_col = 'Osoba', dtype = str) #Results in a table for a quick search
+        self.df_links = pd.read_csv('D:\My stuff\Coding\MČR\MČR links.csv')
+        with open('D:\My stuff\Coding\MČR\mcr_results.pkl', 'rb') as handle:
+            self.mcr_results = pickle.load(handle)
 
         #Get the output
         person = self.person_textbox.get()
@@ -99,7 +102,7 @@ class Window:
 
         #Create a window for the final output
         self.person_output_root = ctk.CTkToplevel(self.root)
-        self.center_window(500, 200 if index_check == 'Not found' else 500, self.person_output_root)
+        self.center_window(500 if index_check == 'Not found' else 700, 200 if index_check == 'Not found' else 500, self.person_output_root)
         self.person_output_root.title('ČSTS MČR database')
 
         
@@ -137,8 +140,18 @@ class Window:
             res_df['index'] = res_df['index'].str.replace('Do 21let', 'Do\xa021let') #Replace a space with a special character so a split can be done
             res_df[['Year', 'Age group', 'Category']] = res_df['index'].str.split(' ', expand = True) #Split the index into columns
             res_df.drop('index', axis = 1, inplace = True) #Drop the obsolete index
+            res_df['Age group'] = res_df['Age group'].str.replace('Do\xa021let', 'Do 21let')
             res_df.rename(columns = {index_check : 'Rank'}, inplace = True) #Rename the column with the rank
             res_df = res_df.loc[:, ['Year', 'Age group', 'Category', 'Rank']] #Rearrange the columns
+            res_df['Partner'] = '' #Prepare a column for the partner in each competition
+            for i in res_df.index:  #Loop through all competitions
+                comp_id = self.df_links.loc[(self.df_links['Year'].astype(str) == res_df.loc[i, 'Year']) & (self.df_links['Age group'] == res_df.loc[i, 'Age group']) & (self.df_links['Category'] == res_df.loc[i, 'Category']), :].index[0] #Find the competition
+                comp = self.mcr_results[comp_id] #Get the competition table
+                if index_check in comp['Partner'].values:
+                    partner = comp.loc[comp['Partner'] == index_check, 'Partnerka'].values[0] #Get the partner (female)
+                else:
+                    partner = comp.loc[comp['Partnerka'] == index_check, 'Partner'].values[0] #Get the partner (male)
+                res_df.loc[i, 'Partner'] = partner #Store the partner
             res_df = np.vstack([res_df.columns, res_df.values]).tolist() #Add columns as a first row and convert to numpy array
 
             #Add label
@@ -146,7 +159,7 @@ class Window:
             label.grid(row = 0, column = 0, padx = 20, pady = 20)
 
             #Create a scrollable frame
-            frame = ctk.CTkScrollableFrame(self.person_output_root, width = 400, height = 300, fg_color = self.root.cget('fg_color'))
+            frame = ctk.CTkScrollableFrame(self.person_output_root, width = 600, height = 300, fg_color = self.root.cget('fg_color'))
             frame.columnconfigure(0, weight = 1)
 
             #Create the table
@@ -236,11 +249,6 @@ class Window:
         """
         Function getting competition information from the user
         """
-        #Load data
-        self.df_links = pd.read_excel('D:\My stuff\Coding\MČR\MČR links.xlsx')
-        with open('D:\My stuff\Coding\MČR\mcr_results.pkl', 'rb') as handle:
-            self.mcr_results = pickle.load(handle)
-
         #Create a window
         self.comp_root = ctk.CTkToplevel(self.root)
         self.center_window(500, 300, self.comp_root)
