@@ -249,6 +249,11 @@ class Window:
         """
         Function getting competition information from the user
         """
+        #Load data
+        self.df_links = pd.read_csv('D:\My stuff\Coding\MČR\MČR links.csv')
+        with open('D:\My stuff\Coding\MČR\mcr_results.pkl', 'rb') as handle:
+            self.mcr_results = pickle.load(handle)
+        
         #Create a window
         self.comp_root = ctk.CTkToplevel(self.root)
         self.center_window(500, 300, self.comp_root)
@@ -259,100 +264,147 @@ class Window:
         label.grid(row = 0, column = 0, padx = 20, pady = 20)
 
         #Add a menu for year
-        self.year_menu = ctk.CTkOptionMenu(self.comp_root, values = self.df_links['Year'].unique())
-        self.year_menu.grid(row = 1, column = 0, padx = 20, pady = 20)
+        self.year_menu = ctk.CTkOptionMenu(self.comp_root, values = self.df_links['Year'].unique().astype(str))
+        self.year_menu.grid(row = 1, column = 0, padx = 20, pady = 10)
+        self.year_menu.set('Select year')
 
         #Add a menu for age group
         self.age_group_menu = ctk.CTkOptionMenu(self.comp_root, values = self.df_links['Age group'].unique())
-        self.age_group_menu.grid(row = 2, column = 0, padx = 20, pady = 20)
+        self.age_group_menu.grid(row = 2, column = 0, padx = 20, pady = 10)
+        self.age_group_menu.set('Select age group')
 
         #Add a menu for category
         self.category_menu = ctk.CTkOptionMenu(self.comp_root, values = self.df_links['Category'].unique())
-        self.category_menu.grid(row = 3, column = 0, padx = 20, pady = 20)
+        self.category_menu.grid(row = 3, column = 0, padx = 20, pady = 10)
+        self.category_menu.set('Select category')
+
+        #Create a grid for the buttons
+        buttframe = ctk.CTkFrame(self.comp_root, fg_color = self.root.cget('fg_color'))
+        buttframe.columnconfigure(0, weight = 1)
+        buttframe.columnconfigure(1, weight = 1)
+        buttframe.columnconfigure(2, weight = 1)
 
         #Add an OK button
-        butt_comp = ctk.CTkButton(self.comp_root, text = 'OK', command = self.get_comp)
-        butt_comp.grid(row = 2, column = 0, padx = 20, pady = 20)
+        butt_comp = ctk.CTkButton(buttframe, text = 'OK', command = self.get_comp)
+        butt_comp.grid(row = 0, column = 0, padx = 10)
+
+        #Add a main page button
+        butt_main = ctk.CTkButton(buttframe, text = 'Main page', command = self.comp_root.destroy)
+        butt_main.grid(row = 0, column = 1, padx = 10)
+
+        #Add a cancel button
+        butt_canc = ctk.CTkButton(buttframe, text = 'Cancel', command = self.cancel_comp_root)
+        butt_canc.grid(row = 0, column = 2, padx = 10)
+
+        #Put the frame in the window
+        buttframe.grid(row = 4, column = 0, pady = 20)
 
         #Center everything
         self.comp_root.grid_columnconfigure(0, weight = 1)
 
         #Put in focus
         self.comp_root.grab_set()
+    
+    def cancel_comp_root(self):
+        '''
+        Function serving as a command for the cancel button in the comp window
+        '''
+        self.comp_root.destroy()
+        self.root.destroy()
 
     def get_comp(self):
         """
         Function for the OK button in the Competition window. Get the output and close the window
         """
+        #Get the index of the competition
+        year = self.year_menu.get()
+        age_group = self.age_group_menu.get()
+        category = self.category_menu.get()
+        try:
+            ind = np.where((self.df_links['Year'] == int(year)) & (self.df_links['Age group'] == age_group) & (self.df_links['Category'] == category))[0][0]
+        except IndexError:
+            ind = None
+
+        #Close the competition window
+        self.comp_root.destroy()
+        
         #Create a window for the final output
         self.comp_output_root = ctk.CTkToplevel(self.root)
-        self.center_window(600, 500, self.comp_output_root)
+        self.center_window(700 if ind is not None else 500, 500 if ind is not None else 200, self.comp_output_root)
         self.comp_output_root.title('ČSTS MČR Database')
 
-        #Find the desired competition
-        try:
-            #Get the index of the competition
-            ind = np.where((self.df_links['Year'] == int(self.year_menu.get())) & (self.df_links['Age group'] == self.age_group_menu.get()) & (self.df_links['Category'] == self.category_menu.get()))[0][0]
-            
-            #Close the competition window
-            self.comp_root.destroy()
-
+        if ind is not None:
             #Get the results
             res_df = self.mcr_results[ind]
+            res_df = np.vstack([res_df.columns, res_df.values]).tolist() #Add columns as a first row and convert to numpy array
 
-            #Create a Frame
-            table_frame = ttk.Frame(self.comp_output_root)
-            table_frame.pack(pady = 20)
+            #Add label
+            label = ctk.CTkLabel(self.comp_output_root, text = f'Results for year: {year}, age group: {age_group}, and category: {category}', justify = 'center', wraplength = 500)
+            label.grid(row = 0, column = 0, padx = 20, pady = 20)
 
-            #Add a scrollbar
-            table_scroll = ttk.Scrollbar(table_frame)
-            table_scroll.pack(side = tk.RIGHT, fill = tk.Y)
+            #Create a scrollable frame
+            frame = ctk.CTkScrollableFrame(self.comp_output_root, width = 600, height = 300, fg_color = self.root.cget('fg_color'))
+            frame.columnconfigure(0, weight = 1)
 
-            #Initiate the resulting table
-            table = ttk.Treeview(table_frame, yscrollcommand = table_scroll.set)
-            table.pack()
-            table_scroll.config(command = table.yview)
+            #Create the table
+            table = CTkTable(frame, row = len(res_df), column = len(res_df[0]), values = res_df, header_color = ['#3B8ED0', '#1F6AA5'])
+            table.pack(expand = True, fill="both")
 
-            #Define the columns
-            cols = ['Rank', 'Male partner', 'Female partner', 'Club']
-            table['columns'] = cols
-            table.column("#0", width = 0,  stretch = tk.NO) #The 0th column
-            table.column('Rank', anchor = tk.CENTER, width = 50)
-            table.column('Male partner', anchor = tk.CENTER, width = 120)
-            table.column('Female partner', anchor = tk.CENTER, width = 120)
-            table.column('Club', anchor = tk.CENTER, width = 180)
-            for i in cols:
-                table.heading(i, text = i, anchor = tk.CENTER)
-
-            #Add data
-            for _, i in res_df.iterrows():
-                table.insert(parent = '', index = 'end', text = '', values = list(i.values))
-
-            #Pack the table
-            table.pack()
+            #Add the frame
+            frame.grid(row = 1, column = 0, padx = 20, pady = 20)
 
             #Create a grid for the buttons
-            buttframe = ttk.Frame(self.comp_output_root)
+            buttframe = ctk.CTkFrame(self.comp_output_root, fg_color = self.root.cget('fg_color'))
             buttframe.columnconfigure(0, weight = 1)
             buttframe.columnconfigure(1, weight = 1)
+            buttframe.columnconfigure(2, weight = 1)
 
             #Button for continuing the search
-            butt_next = ttk.Button(buttframe, text = 'Find next', command = self.comp_output_root.destroy)
-            butt_next.grid(row = 0, column = 0)
+            butt_next = ctk.CTkButton(buttframe, text = 'Find next', command = self.try_again)
+            butt_next.grid(row = 0, column = 0, padx = 10)
+
+            #Button for returning to the main page
+            butt_main = ctk.CTkButton(buttframe, text = 'Main page', command = self.comp_output_root.destroy)
+            butt_main.grid(row = 0, column = 1, padx = 10)
 
             #Button for canceling
-            butt_canc = ttk.Button(buttframe, text = 'Cancel', command = self.cancel_comp)
-            butt_canc.grid(row = 0, column = 1)
+            butt_canc = ctk.CTkButton(buttframe, text = 'Cancel', command = self.cancel_comp)
+            butt_canc.grid(row = 0, column = 2, padx = 10)
 
             #Put frame into the window
-            buttframe.pack(expand = True, fill = 'x')
-
-        except IndexError:
-            #In case no such competition is found
-            res = ttk.Label(self.comp_output_root, text = 'No competition was found for the given combination', justify = 'center', wraplength = 400)
-            res.pack(expand = True)
+            buttframe.grid(row = 2, column = 0, padx = 20, pady = 20)
         
-        self.comp_output_root.mainloop()
+        else:   
+            #In case no such competition is found
+            res = ctk.CTkLabel(self.comp_output_root, text = 'No competition was found for the given combination', justify = 'center', wraplength = 400)
+            res.grid(row = 0, column = 0, padx = 20, pady = 20)
+
+            #Add a frame for the buttons
+            buttframe = ctk.CTkFrame(self.comp_output_root, fg_color = self.root.cget('fg_color'))
+            buttframe.columnconfigure(0, weight = 1)
+            buttframe.columnconfigure(1, weight = 1)
+            buttframe.columnconfigure(2, weight = 1)
+
+            #Create a try again button
+            butt_next = ctk.CTkButton(buttframe, text = 'Try again', command = self.try_again)
+            butt_next.grid(row = 0, column = 0, padx = 10)
+
+            #Create a main page button
+            butt_main = ctk.CTkButton(buttframe, text = 'Main page', command = self.comp_output_root.destroy)
+            butt_main.grid(row = 0, column = 1, padx = 10)
+
+            #Create a cancel button
+            butt_canc = ctk.CTkButton(buttframe, text = 'Cancel', command = self.cancel_comp)
+            butt_canc.grid(row = 0, column = 2, padx = 10)
+
+            #Put frame into the window
+            buttframe.grid(row = 1, column = 0, padx = 20, pady = 20)
+
+        #Center everything
+        self.comp_output_root.grid_columnconfigure(0, weight = 1)
+
+        #Put in focus
+        self.comp_output_root.grab_set()
 
     def cancel_comp(self):
         """
@@ -361,14 +413,11 @@ class Window:
         self.comp_output_root.destroy()
         self.root.destroy()
 
-    def set_style(self, wind, style):
-        """
-        Function setting a style of the given root
-        """
-        wind.tk.call('lappend', 'auto_path', 'D:/My stuff/Coding/MČR/awthemes-10.4.0')
-        wind.tk.call('package', 'require', style)
-        wind_style = ttk.Style(wind)
-        wind_style.theme_use(style)
-        wind.configure(bg = wind_style.lookup('TFrame', 'background'))
+    def try_again(self):
+        '''
+        Function serving as a command for the try again and find next buttons in the competition window
+        '''
+        self.comp_output_root.destroy()
+        self.comp_window()
 
 Window()
