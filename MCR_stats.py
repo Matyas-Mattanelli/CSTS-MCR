@@ -155,6 +155,7 @@ class Window:
                 else:
                     partner = comp.loc[comp['Partnerka'] == index_check, 'Partner'].values[0] #Get the partner (male)
                 res_df.loc[i, 'Partner'] = partner #Store the partner
+            res_df = res_df.loc[res_df.index[::-1], :] #Reversing the order
             res_df = np.vstack([res_df.columns, res_df.values]).tolist() #Add columns as a first row and convert to numpy array
 
             #Add label
