@@ -88,9 +88,9 @@ class Window:
         Function for the OK button in the Person window. Gets the output and closes the window
         """
         #Load data
-        self.df = pd.read_csv('D:\My stuff\Coding\MČR\MČR results.csv', index_col = 'Osoba', dtype = str) #Results in a table for a quick search
-        self.df_links = pd.read_csv('D:\My stuff\Coding\MČR\MČR links.csv')
-        with open('D:\My stuff\Coding\MČR\mcr_results.pkl', 'rb') as handle:
+        self.df = pd.read_csv('MČR results.csv', index_col = 'Osoba', dtype = str) #Results in a table for a quick search
+        self.df_links = pd.read_csv('MČR links.csv')
+        with open('mcr_results.pkl', 'rb') as handle:
             self.mcr_results = pickle.load(handle)
 
         #Get the output
@@ -254,8 +254,8 @@ class Window:
         Function getting competition information from the user
         """
         #Load data
-        self.df_links = pd.read_csv('D:\My stuff\Coding\MČR\MČR links.csv')
-        with open('D:\My stuff\Coding\MČR\mcr_results.pkl', 'rb') as handle:
+        self.df_links = pd.read_csv('MČR links.csv')
+        with open('mcr_results.pkl', 'rb') as handle:
             self.mcr_results = pickle.load(handle)
         
         #Create a window
