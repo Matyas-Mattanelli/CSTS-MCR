@@ -108,7 +108,6 @@ class Window:
         self.person_output_root.title('ČSTS MČR database')
         self.person_output_root.after(250, lambda: self.person_output_root.iconbitmap('cstslogo.ico'))
 
-        
         if index_check == 'Not found':
             if person == '':
                 label_text = 'Please specify a valid name'
