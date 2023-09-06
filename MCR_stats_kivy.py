@@ -6,9 +6,12 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.textinput import TextInput
 from kivymd.uix.datatables import MDDataTable
 from kivy.metrics import dp
+from kivy.uix.screenmanager import NoTransition
+from kivy.uix.spinner import Spinner
 
 import pandas as pd
 import pickle
+import numpy as np
 
 class MCRStatsApp(MDApp):
     '''
@@ -18,6 +21,12 @@ class MCRStatsApp(MDApp):
         '''
         Function returning the required widget
         '''
+        #Load data
+        self.df = pd.read_csv('D:\My stuff\Coding\MČR\MČR results.csv', index_col = 'Osoba', dtype = str) #Results in a table for a quick search
+        self.df_links = pd.read_csv('D:\My stuff\Coding\MČR\MČR links.csv')
+        with open('D:\My stuff\Coding\MČR\mcr_results.pkl', 'rb') as handle:
+            self.mcr_results = pickle.load(handle)
+
         #Change the theme
         self.theme_cls.theme_style = 'Dark'
 
@@ -25,7 +34,7 @@ class MCRStatsApp(MDApp):
         self.title = 'ČSTS MČR Database'
 
         #Initiate the screen manager
-        self.sm = ScreenManager()
+        self.sm = ScreenManager(transition = NoTransition())
 
         #Initiate the main screen
         main_screen = Screen(name = 'main_screen')
@@ -107,15 +116,63 @@ class MCRStatsApp(MDApp):
         #Add the screen to the screen manager
         self.sm.add_widget(person_input_screen)
 
-        #Add a screen with the results
+        #Add a screen with the results for person
         person_screen = Screen(name = 'person')
         self.sm.add_widget(person_screen)
 
-        #Load data
-        self.df = pd.read_csv('D:\My stuff\Coding\MČR\MČR results.csv', index_col = 'Osoba', dtype = str) #Results in a table for a quick search
-        self.df_links = pd.read_csv('D:\My stuff\Coding\MČR\MČR links.csv')
-        with open('D:\My stuff\Coding\MČR\mcr_results.pkl', 'rb') as handle:
-            self.mcr_results = pickle.load(handle)
+        #Initiate the competition input screen
+        comp_input_screen = Screen(name = 'comp_input')
+
+        #Initiate the layout
+        comp_input_layout = BoxLayout(orientation = 'vertical')
+
+        #Add a Label
+        label_comp_input = Label(text = 'Please specify the parameters of the desired competition', halign = 'center', font_size = 50) #, size_hint = (1, 0.5)
+        label_comp_input.bind(width = lambda *x: label_comp_input.setter('text_size')(label_comp_input, (label_comp_input.width, None)), texture_size = lambda *x: label_comp_input.setter('height')(label_comp_input, label_comp_input.texture_size[1]))
+        comp_input_layout.add_widget(label_comp_input)
+
+        #Add a menu for year
+        self.year_menu = Spinner(text = 'Select year', values = self.df_links['Year'].unique().astype(str), font_size = 50)
+        comp_input_layout.add_widget(self.year_menu)
+
+        #Add a menu for age group
+        self.age_group_menu = Spinner(text = 'Select age group', values = self.df_links['Age group'].unique(), font_size = 50)
+        comp_input_layout.add_widget(self.age_group_menu)
+
+        #Add a menu for category
+        self.category_menu = Spinner(text = 'Select category', values = self.df_links['Category'].unique(), font_size = 50)
+        comp_input_layout.add_widget(self.category_menu)
+
+        #Add a layout of buttons
+        butt_layout_comp_input = BoxLayout()
+
+        #Add a button for confirmation
+        butt_ok_comp_input = Button(text = 'Ok', background_color = '99CCFF', font_size = 40)
+        butt_ok_comp_input.bind(on_press = lambda instance: self.competition(instance))
+        butt_layout_comp_input.add_widget(butt_ok_comp_input)
+
+        #Add a button for returning to the main page
+        butt_main_comp_input = Button(text = 'Main page', background_color = '99CCFF', font_size = 40)
+        butt_main_comp_input.bind(on_press = lambda instance: self.change_screen(instance, 'main_screen'))
+        butt_layout_comp_input.add_widget(butt_main_comp_input)
+
+        #Add the buttons to the main layout
+        comp_input_layout.add_widget(butt_layout_comp_input)
+
+        #Add a button to cancel the program
+        butt_canc_comp_input = Button(text = 'Cancel', pos_hint = {'center_x' : .5, 'center_y' : .5}, background_color = '99CCFF', font_size = 40)
+        butt_canc_comp_input.bind(on_press = self.stop)
+        comp_input_layout.add_widget(butt_canc_comp_input)
+
+        #Add the layout to the screen
+        comp_input_screen.add_widget(comp_input_layout)
+
+        #Add the screen to the screen manager
+        self.sm.add_widget(comp_input_screen)
+
+        #Add a screen with the results for competition
+        person_screen = Screen(name = 'competition')
+        self.sm.add_widget(person_screen)
 
         return self.sm
 
@@ -225,6 +282,85 @@ class MCRStatsApp(MDApp):
         '''
         Function rendering the competiton output screen and putting it into focus
         '''
+        #Clear all widgets
+        self.sm.get_screen('competition').clear_widgets()
+
+        #Initiate the layout
+        comp_layout = BoxLayout(orientation = 'vertical')
+
+        #Get the index of the competition
+        year = self.year_menu.text
+        age_group = self.age_group_menu.text
+        category = self.category_menu.text
+        try:
+            ind = np.where((self.df_links['Year'] == int(year)) & (self.df_links['Age group'] == age_group) & (self.df_links['Category'] == category))[0][0]
+        except IndexError:
+            ind = None
+
+        if ind is not None:
+            #Get the results
+            res_df = self.mcr_results[ind]
+
+            #Add a Label
+            label_comp = Label(text = f'Results for year: {year}, age group: {age_group}, and category: {category}', halign = 'center', font_size = 30, size_hint = (1, 0.1)) #, size_hint = (1, 0.5)
+            label_comp.bind(width = lambda *x: label_comp.setter('text_size')(label_comp, (label_comp.width, None)), texture_size = lambda *x: label_comp.setter('height')(label_comp, label_comp.texture_size[1]))
+            comp_layout.add_widget(label_comp)
+
+            #Add a table (MDDataTable)
+            table = MDDataTable(column_data = [(i, dp(30)) for i in res_df.columns], row_data = [tuple(res_df.loc[i, :].to_list()) for i in res_df.index], rows_num = res_df.shape[0], pos_hint = {'center_x' : .5, 'center_y' : .5}, size_hint = {0.9, 0.7}) #, background_color_cell = 'black', background_color_selected_cell = 'black', background_color_header = 'black'
+
+            #Add the table to the layout
+            comp_layout.add_widget(table)
+
+            #Initiate a grid for the buttons
+            butt_layout = BoxLayout(size_hint = (1, 0.1))
+
+            #Add a button for trying again
+            butt_next = Button(text = 'Find next', background_color = '99CCFF', font_size = 40)
+            butt_next.bind(on_press = lambda instance: self.change_screen(instance, 'comp_input'))
+            butt_layout.add_widget(butt_next)
+
+            #Add a button for returning to the main page
+            butt_main = Button(text = 'Main page', background_color = '99CCFF', font_size = 40)
+            butt_main.bind(on_press = lambda instance: self.change_screen(instance, 'main_screen'))
+            butt_layout.add_widget(butt_main)
+
+            #Add the buttons to the main layout
+            comp_layout.add_widget(butt_layout)
+
+            #Add a button to cancel the program
+            butt_canc = Button(text = 'Cancel', pos_hint = {'center_x' : .5, 'center_y' : .5}, size_hint = (1, 0.1), background_color = '99CCFF', font_size = 40)
+            butt_canc.bind(on_press = self.stop)
+            comp_layout.add_widget(butt_canc)
+        else:
+            #Add a Label
+            label_comp = Label(text = f'Results for year: {year}, age group: {age_group}, and category: {category} not found', halign = 'center', font_size = 50) #, size_hint = (1, 0.5)
+            label_comp.bind(width = lambda *x: label_comp.setter('text_size')(label_comp, (label_comp.width, None)), texture_size = lambda *x: label_comp.setter('height')(label_comp, label_comp.texture_size[1]))
+            comp_layout.add_widget(label_comp)
+
+            #Initiate a grid for the buttons
+            butt_layout = BoxLayout()
+
+            #Add a button for trying again
+            butt_try = Button(text = 'Try again', background_color = '99CCFF', font_size = 40)
+            butt_try.bind(on_press = lambda instance: self.change_screen(instance, 'comp_input'))
+            butt_layout.add_widget(butt_try)
+
+            #Add a button for returning to the main page
+            butt_main = Button(text = 'Main page', background_color = '99CCFF', font_size = 40)
+            butt_main.bind(on_press = lambda instance: self.change_screen(instance, 'main_screen'))
+            butt_layout.add_widget(butt_main)
+
+            #Add the buttons to the main layout
+            comp_layout.add_widget(butt_layout)
+
+            #Add a button to cancel the program
+            butt_canc = Button(text = 'Cancel', pos_hint = {'center_x' : .5, 'center_y' : .5}, background_color = '99CCFF', font_size = 40)
+            butt_canc.bind(on_press = self.stop)
+            comp_layout.add_widget(butt_canc)
+
+        #Add the layout to the screen
+        self.sm.get_screen('competition').add_widget(comp_layout)
 
         #Change the screen
         self.sm.current = 'competition'
@@ -236,6 +372,10 @@ class MCRStatsApp(MDApp):
         self.sm.current = name
         if name == 'person_input':
             self.person_input.text = ''
+        elif name == 'comp_input':
+            self.year_menu.text = 'Select year'
+            self.age_group_menu.text = 'Select age group'
+            self.category_menu.text = 'Select category'
     
     def search_index(self, x):
         """
