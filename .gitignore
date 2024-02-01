@@ -7,3 +7,5 @@ test.ipynb
 Archive
 __pycache__
 *.png
+*.spec
+*.apk
